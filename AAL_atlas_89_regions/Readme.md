@@ -1,3 +1,5 @@
+See the top-level [README](../README.md) for how this atlas is used in the pipeline.
+
 ## This atlas is a modified version of atlas described here: 
 Automated Anatomical Labeling of Activations in SPM Using a Macroscopic Anatomical Parcellation of the MNI MRI Single-Subject Brain. N. Tzourio-Mazoyer, B. Landeau, D. Papathanassiou, F. Crivello, O. Étard, N. Delcroix, B. Mazoyer, and M. Joliot. 
 NeuroImage 2002, 15 :273-289

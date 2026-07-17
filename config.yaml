@@ -1,0 +1,28 @@
+# Shared defaults for all scripts under scripts/. Override any value with the
+# matching --flag on a script's CLI; CLI flags always win over this file.
+#
+# data_root points at the external adjacency-matrix / derived-data tree
+# produced by https://github.com/veronicamunoz/rs_graph_processing (per-subject
+# Graphs/wAALours/*.txt adjacency matrices, SPM rp_*.txt motion files, and
+# regressed/raw timeseries). It is NOT this repo's Timeseries/ folder -- see
+# the README "Data" section.
+data_root: /path/to/derived_data_root
+
+sessions:
+  ses-1: baseline (rested wakefulness, RW)
+  ses-2: acute (total sleep deprivation, TSD)
+  ses-3: chronic (sleep restriction, CSR)
+
+n_regions: 89
+n_edges_default: 400
+n_edges_chord: 200
+
+atlas:
+  aal_coords: AAL_atlas_89_regions/AAL_89_regions_coords.txt
+  aal_coords_mni: AAL_atlas_89_regions/AAL_89_regions_coords_MNI.txt
+  aal_region_list: AAL_atlas_89_regions/AAL_89_regions_list.csv
+  aicha_coords: AICHA_AAL_391_regions/AICHA_AAL_391_regions_coords.txt
+  aicha_coords_mni: AICHA_AAL_391_regions/AICHA_AAL_391_regions_coords_MNI.txt
+  aicha_region_list: AICHA_AAL_391_regions/AICHA_AAL_391_regions_list.csv
+
+output_dir: outputs

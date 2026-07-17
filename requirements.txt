@@ -1,0 +1,19 @@
+numpy
+pandas
+matplotlib
+scipy
+scikit-learn
+statsmodels
+seaborn
+networkx
+pyyaml
+
+# Multiple-comparisons correction (bonferroni, lsu/FDR)
+multipy
+
+# Glass-brain plotting of significant nodes
+netplotbrain
+
+# Chord plots
+holoviews
+bokeh

@@ -1,0 +1,101 @@
+PROMPT 1: Full hackathon cleanup, keeping data files in git
+
+Request (paraphrased): "/hackathon-cleanup but keep the data files, dont
+install any python packages" -- run the full hackathon-cleanup sequence
+(understand project aim, reorganize, clean code, convert notebooks to
+scripts, build a modular/defensive/tested pipeline, rewrite the README),
+except: do NOT remove, move, or otherwise relocate the data directories
+(Timeseries/, AAL_atlas_89_regions/, AICHA_AAL_391_regions/) out of version
+control -- they stay in the repo as-is. Also: do not pip-install anything in
+this session (no packages were available locally beyond numpy; verification
+was done via `python3 -m py_compile`, i.e. syntax-only, not by actually
+executing the scripts against real dependencies).
+
+What the repo was: 3 large, hardcoded-Mac-path Jupyter notebooks (87 cells
+total) computing graph-theoretical/HDI/CCML/chord-plot analyses of an
+fMRI sleep-deprivation study, plus committed atlas and ROI-timeseries data.
+Read the full README/readme.txt/atlas sub-README, walked the whole tree, and
+read essentially every cell of all 3 notebooks (partly myself, partly via a
+delegated research-agent audit for the largest notebook) before touching
+anything, to build an accurate hypothesis of what the code does end-to-end.
+
+Key finding that shaped the whole design: the notebooks operate on
+per-subject adjacency matrices and SPM motion-parameter files that are NOT
+present in this repo -- only the upstream ROI timeseries and atlases are
+committed here. Adjacency-matrix computation happens in the external
+rs_graph_processing repo already linked from the original README. So every
+new script's `--data-root` points at that external derived-data tree, not
+at this repo's Timeseries/ folder -- documented explicitly in the new
+README so the pipeline isn't misleading about what it can run out of the
+box with just what's committed.
+
+Four real bugs/gaps were found in the source notebooks and confirmed with
+the user before fixing (via AskUserQuestion) rather than guessed at
+silently, since this backs a published preprint:
+1. The HDI "kappa" CSVs (kappas_degree.csv etc.) were read in 6+ places but
+   never actually written anywhere -- the only candidate save cells were
+   commented out and referenced an undefined variable. User chose:
+   reconstruct a real save step (scripts/hdi/compute_hdi.py), inferred from
+   the surrounding (working) per-subject LinearRegression logic.
+2. CCML's visualization step imported a local `PlotFunction` module (via a
+   hardcoded sys.path into a course-tutorial folder) that doesn't exist
+   anywhere in the repo. User chose: write a reasonable reconstruction
+   (scripts/ccml/plot_utils.py, scatter_2d), documented as a reconstruction
+   not the original.
+3. CCML was fully implemented (embedding + permutation test) for
+   'degree'/'closeness' but only had the data-prep half for 'clustering'.
+   User chose: complete clustering by mirroring the other two metrics
+   (scripts/ccml/run_ccml.py).
+4. Two different survey CSV filenames were used across the behavior
+   analyses. User confirmed this is intentional (not a naming-drift bug) --
+   kept as two distinct default paths, both overridable via CLI.
+Also fixed without asking (unambiguous naming bugs, not scientific
+judgment calls): the nodal-metrics writer saved degree centrality under
+column "Degree" while every downstream reader (HDI, CCML) expected
+"Degree_centrality" -- standardized on "Degree_centrality" everywhere. Also
+fixed a ROI->network typo ('Occipial_R' -> 'Occipital_R') in the chord-plot
+color mapping that silently misclassified that node as 'Other' instead of
+the visual network.
+
+Changes made:
+- Added scripts/common/ (config.py, io.py, stats.py, constants.py,
+  testing.py) -- shared config.yaml loading, adjacency/coordinate/ROI I/O
+  helpers, LMM-with-reference-session + FDR-correction helpers, and
+  synthetic-fixture builders reused by every script's --test flag.
+- Added config.yaml (shared data_root/sessions/atlas-paths/n_edges
+  defaults) and requirements.txt (numpy, pandas, matplotlib, scipy,
+  scikit-learn, statsmodels, seaborn, networkx, pyyaml, multipy,
+  netplotbrain, holoviews, bokeh).
+- Converted Scripts/quality_check_FD_code.ipynb (10 cells, 8 near-duplicate)
+  into scripts/qc/compute_framewise_displacement.py, parameterized by
+  --session/--timeseries-type instead of 8 copy-pasted cells.
+- Converted Scripts/Graphs_nodal_global_metrics_HDI_CCML.ipynb (70 cells)
+  into 8 graph_metrics scripts (compute_nodal_metrics,
+  compute_global_metrics, compute_community_structure,
+  compare_global_metrics_lmm, compare_global_metrics_permutation,
+  compare_nodal_metrics_lmm, correct_nodal_pvalues, plot_significant_nodes),
+  2 HDI scripts (compute_hdi, validate_hdi_permutation -- the latter
+  consolidates ~8 near-duplicate permutation-exploration cells into 4
+  reusable null models), 2 CCML files (plot_utils reconstruction +
+  run_ccml), and 1 chord-plot script (generate_chord_plots).
+- Converted Scripts/subjective_behavior_state_traits.ipynb (7 cells) into 3
+  behavior scripts (state_sleepiness_vs_metrics, traits_vs_baseline_metrics,
+  traits_vs_hdi_kappa).
+- Every script: argparse CLI, config.yaml-backed defaults, and a --test flag
+  that runs the real code path against a small synthetic fixture (no real
+  data_root needed). All 24 new .py files pass `python3 -m py_compile`;
+  actual execution against real dependencies was NOT verified in this
+  session (no packages installed, per explicit instruction).
+- Removed (git rm, fully recoverable from history): Scripts/ (all 3
+  notebooks + the stray "preprocessing" pointer file, whose one line was
+  folded into the new README's Data section), root readme.txt (content
+  folded into the new README's Data section), .DS_Store. Added .gitignore
+  (.DS_Store, __pycache__, outputs/, .ipynb_checkpoints).
+- Data directories (Timeseries/, AAL_atlas_89_regions/,
+  AICHA_AAL_391_regions/) were left completely untouched, per this
+  session's explicit instruction.
+- Rewrote README.md to the 4-section minimal format (Overview,
+  Installation, Usage, Data), consolidating the old README + readme.txt +
+  Scripts/preprocessing into one place; added a one-line pointer back to
+  the top-level README at the top of AAL_atlas_89_regions/Readme.md (left
+  in place as supplementary atlas-citation detail).
